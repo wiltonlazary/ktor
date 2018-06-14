@@ -67,7 +67,8 @@ private fun PipelineContext<*, ApplicationCall>.multiPartData(rc: ByteReadChanne
             ?: throw IllegalStateException("Content-Type header is required for multipart processing")
 
     val contentLength = call.request.header(HttpHeaders.ContentLength)?.toLong()
-    return CIOMultipartDataBase(Unconfined, rc, contentType, contentLength)
+    val parts = parseMultipart(Unconfined, rc, contentType, contentLength)
+    return CIOMultipartData(parts)
 }
 
 private suspend fun ByteReadChannel.readText(

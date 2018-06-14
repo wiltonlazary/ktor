@@ -5,32 +5,49 @@ import io.ktor.http.*
 import io.ktor.http.cio.internals.*
 import io.ktor.network.util.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.io.*
 import java.io.*
 import java.nio.channels.*
 import java.nio.file.*
 import kotlin.coroutines.experimental.*
 
-class CIOMultipartData(channel: ByteReadChannel,
-                       headers: HttpHeadersMap,
-                       formFieldLimit: Int = 65536,
-                       inMemoryFileUploadLimit: Int = formFieldLimit)
-    : CIOMultipartDataBase(
-        ioCoroutineDispatcher,
-        channel, headers[HttpHeaders.ContentType]!!,
-        headers[HttpHeaders.ContentLength]?.parseDecLong(),
-        formFieldLimit, inMemoryFileUploadLimit
-)
+class CIOMultipartData(
+        events: ReceiveChannel<MultipartEvent>,
+        formFieldLimit: Int = 65536,
+        inMemoryFileUploadLimit: Int = formFieldLimit
+) : @Suppress("DEPRECATION") CIOMultipartDataBase(events, formFieldLimit, inMemoryFileUploadLimit) {
 
+    @Deprecated("Start multipart parsing explicitly")
+    constructor(channel: ByteReadChannel,
+                headers: HttpHeadersMap,
+                formFieldLimit: Int = 65536,
+                inMemoryFileUploadLimit: Int = formFieldLimit)
+            : this(parseMultipart(ioCoroutineDispatcher, channel, headers[HttpHeaders.ContentType]!!,
+            headers[HttpHeaders.ContentLength]?.parseDecLong()),
+            formFieldLimit,
+            inMemoryFileUploadLimit
+    )
+}
+
+@Deprecated("Use CIOMultipartData instead")
 open class CIOMultipartDataBase(
-        coroutineContext: CoroutineContext,
-        channel: ByteReadChannel,
-        contentType: CharSequence,
-        contentLength: Long?,
+        private val events: ReceiveChannel<MultipartEvent>,
         private val formFieldLimit: Int = 65536,
         private val inMemoryFileUploadLimit: Int = formFieldLimit
 ) : MultiPartData {
-    private val events = parseMultipart(coroutineContext, channel, contentType, contentLength)
+
+    @Deprecated("Start multipart parsing explicitly")
+    constructor(
+            coroutineContext: CoroutineContext,
+            channel: ByteReadChannel,
+            contentType: CharSequence,
+            contentLength: Long?,
+            formFieldLimit: Int = 65536,
+            inMemoryFileUploadLimit: Int = formFieldLimit
+    ) : this(events = parseMultipart(coroutineContext, channel, contentType, contentLength),
+            formFieldLimit = formFieldLimit,
+            inMemoryFileUploadLimit = inMemoryFileUploadLimit)
 
     override val parts: Sequence<PartData> = buildSequence {
         while (!events.isClosedForReceive) {

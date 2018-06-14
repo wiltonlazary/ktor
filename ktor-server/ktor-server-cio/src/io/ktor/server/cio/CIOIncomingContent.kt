@@ -12,5 +12,5 @@ class CIOIncomingContent(private val channel: ByteReadChannel,
 
     override fun readChannel(): ByteReadChannel = channel
 
-    override fun multiPartData(): MultiPartData = CIOMultipartData(channel, headersMap)
+    override fun multiPartData(): MultiPartData = @Suppress("DEPRECATION") CIOMultipartData(channel, headersMap)
 }
