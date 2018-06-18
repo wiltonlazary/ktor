@@ -5,7 +5,9 @@ import kotlinx.coroutines.experimental.*
 import java.net.*
 import java.nio.channels.*
 
-internal class ServerSocketImpl(override val channel: ServerSocketChannel, val selector: SelectorManager)
+internal class ServerSocketImpl(override val channel: ServerSocketChannel,
+                                val selector: SelectorManager,
+                                private val coroutineDispatcher: CoroutineDispatcher)
     : ServerSocket,
         Selectable by SelectableBase(channel) {
     init {
@@ -34,7 +36,7 @@ internal class ServerSocketImpl(override val channel: ServerSocketChannel, val s
         interestOp(SelectInterest.ACCEPT, false)
         nioChannel.configureBlocking(false)
         nioChannel.setOption(StandardSocketOptions.TCP_NODELAY, true)
-        return SocketImpl(nioChannel, selector)
+        return SocketImpl(nioChannel, selector, coroutineDispatcher)
     }
 
     override fun close() {

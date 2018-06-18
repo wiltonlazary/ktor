@@ -20,7 +20,7 @@ class TestApplicationEngine(
 ) : BaseApplicationEngine(environment, EnginePipeline()) {
 
     class Configuration : BaseApplicationEngine.Configuration() {
-        var dispatcher: CoroutineContext = ioCoroutineDispatcher
+        var dispatcher: CoroutineContext = CommonPool
     }
 
     private val configuration = Configuration().apply(configure)

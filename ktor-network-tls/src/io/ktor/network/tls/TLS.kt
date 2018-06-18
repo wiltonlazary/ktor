@@ -1,7 +1,6 @@
 package io.ktor.network.tls
 
 import io.ktor.network.sockets.*
-import io.ktor.network.util.*
 import kotlinx.coroutines.experimental.io.*
 import javax.net.ssl.*
 import kotlin.coroutines.experimental.*
@@ -11,7 +10,7 @@ suspend fun Socket.tls(
     randomAlgorithm: String = "NativePRNGNonBlocking",
     cipherSuites: List<CipherSuite> = CIOCipherSuites.SupportedSuites,
     serverName: String? = null,
-    coroutineContext: CoroutineContext = ioCoroutineDispatcher
+    coroutineContext: CoroutineContext
 ): Socket {
     val reader = openReadChannel()
     val writer = openWriteChannel()

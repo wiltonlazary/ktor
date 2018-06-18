@@ -61,7 +61,7 @@ class TestApplicationResponse(
         val result = ByteChannel(autoFlush = true)
 
         if (readResponse) {
-            responseJob = launch(ioCoroutineDispatcher) {
+            responseJob = launch(CommonPool) {
                 byteContent = result.toByteArray()
             }
         }

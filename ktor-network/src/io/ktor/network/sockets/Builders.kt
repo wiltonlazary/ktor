@@ -1,6 +1,8 @@
 package io.ktor.network.sockets
 
 import io.ktor.network.selector.*
+import io.ktor.network.util.*
+import kotlinx.coroutines.experimental.*
 import java.net.*
 import java.nio.channels.*
 
@@ -24,6 +26,7 @@ class SocketOptions private constructor(private val allOptions: MutableMap<Socke
 
 interface Configurable<out T : Configurable<T>> {
     var options: SocketOptions
+    var coroutineDispatcher: CoroutineDispatcher
 
     fun configure(block: SocketOptions.() -> Unit): T {
         val newOptions = options.copy()
@@ -44,14 +47,19 @@ fun <T: Configurable<T>> T.tcpNoDelay(): T {
 @Deprecated("Specify selector manager explicitly", level = DeprecationLevel.ERROR)
 fun aSocket(): SocketBuilder = TODO()
 
-fun aSocket(selector: SelectorManager) = SocketBuilder(selector, SocketOptions.Empty)
+fun aSocket(selector: SelectorManager, coroutineDispatcher: CoroutineDispatcher = ioCoroutineDispatcher)
+        = SocketBuilder(selector, SocketOptions.Empty, coroutineDispatcher)
 
-class SocketBuilder internal constructor(val selector: SelectorManager, override var options: SocketOptions) : Configurable<SocketBuilder> {
-    fun tcp() = TcpSocketBuilder(selector, options)
-    fun udp() = UDPSocketBuilder(selector, options)
+class SocketBuilder internal constructor(val selector: SelectorManager,
+                                         override var options: SocketOptions,
+                                         override var coroutineDispatcher: CoroutineDispatcher) : Configurable<SocketBuilder> {
+    fun tcp() = TcpSocketBuilder(selector, options, coroutineDispatcher)
+    fun udp() = UDPSocketBuilder(selector, options, coroutineDispatcher)
 }
 
-class TcpSocketBuilder internal constructor(val selector: SelectorManager, override var options: SocketOptions) : Configurable<TcpSocketBuilder> {
+class TcpSocketBuilder internal constructor(val selector: SelectorManager,
+                                            override var options: SocketOptions,
+                                            override var coroutineDispatcher: CoroutineDispatcher) : Configurable<TcpSocketBuilder> {
     suspend fun connect(hostname: String, port: Int) = connect(InetSocketAddress(hostname, port))
     fun bind(hostname: String = "0.0.0.0", port: Int = 0) = bind(InetSocketAddress(hostname, port))
 
@@ -60,7 +68,7 @@ class TcpSocketBuilder internal constructor(val selector: SelectorManager, overr
             assignOptions(options)
             nonBlocking()
 
-            SocketImpl(this, selector).apply {
+            SocketImpl(this, selector, coroutineDispatcher).apply {
                 connect(remoteAddress)
             }
         }
@@ -71,20 +79,22 @@ class TcpSocketBuilder internal constructor(val selector: SelectorManager, overr
             assignOptions(options)
             nonBlocking()
 
-            ServerSocketImpl(this, selector).apply {
+            ServerSocketImpl(this, selector, coroutineDispatcher).apply {
                 channel.bind(localAddress)
             }
         }
     }
 }
 
-class UDPSocketBuilder internal constructor(val selector: SelectorManager, override var options: SocketOptions) : Configurable<UDPSocketBuilder> {
+class UDPSocketBuilder internal constructor(val selector: SelectorManager,
+                                            override var options: SocketOptions,
+                                            override var coroutineDispatcher: CoroutineDispatcher) : Configurable<UDPSocketBuilder> {
     fun bind(localAddress: SocketAddress? = null): BoundDatagramSocket {
         return selector.buildOrClose({ openDatagramChannel() }) {
             assignOptions(options)
             nonBlocking()
 
-            DatagramSocketImpl(this, selector).apply {
+            DatagramSocketImpl(this, selector, coroutineDispatcher).apply {
                 channel.bind(localAddress)
             }
         }
@@ -95,7 +105,7 @@ class UDPSocketBuilder internal constructor(val selector: SelectorManager, overr
             assignOptions(options)
             nonBlocking()
 
-            DatagramSocketImpl(this, selector).apply {
+            DatagramSocketImpl(this, selector, coroutineDispatcher).apply {
                 channel.bind(localAddress)
                 channel.connect(remoteAddress)
             }

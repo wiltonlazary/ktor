@@ -25,7 +25,7 @@ class CIOApplicationEngine(environment: ApplicationEngineEnvironment, configure:
 
     private val stopRequest = CompletableDeferred<Unit>()
 
-    private val serverJob = launch(ioCoroutineDispatcher, start = CoroutineStart.LAZY) {
+    private val serverJob = launch(hostDispatcher, start = CoroutineStart.LAZY) {
         // starting
         withContext(userDispatcher) {
             environment.start()

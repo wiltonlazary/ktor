@@ -8,7 +8,11 @@ import kotlinx.io.pool.*
 import java.nio.channels.*
 import java.util.concurrent.atomic.*
 
-internal abstract class NIOSocketImpl<out S>(override val channel: S, val selector: SelectorManager, val pool: ObjectPool<ByteBuffer>?) : ReadWriteSocket, SelectableBase(channel)
+internal abstract class NIOSocketImpl<out S>(override val channel: S,
+                                             val selector: SelectorManager,
+                                             val pool: ObjectPool<ByteBuffer>?,
+                                             protected val coroutineDispatcher: CoroutineDispatcher)
+    : ReadWriteSocket, SelectableBase(channel)
         where S : java.nio.channels.ByteChannel, S : java.nio.channels.SelectableChannel {
 
     protected val closeFlag = AtomicBoolean()
@@ -25,17 +29,23 @@ internal abstract class NIOSocketImpl<out S>(override val channel: S, val select
 
     final override fun attachForReading(channel: ByteChannel): WriterJob {
         return attachFor("reading", channel, writerJob) {
-            if (pool != null) {
-                attachForReadingImpl(channel, this.channel, this, selector, pool, socketContext)
-            } else {
-                attachForReadingDirectImpl(channel, this.channel, this, selector, socketContext)
+            writer(coroutineDispatcher, parent = socketContext, channel = channel) {
+                if (pool != null) {
+                    attachForReadingImpl(channel,
+                            this@NIOSocketImpl.channel, this@NIOSocketImpl, selector, pool)
+                } else {
+                    attachForReadingDirectImpl(channel,
+                            this@NIOSocketImpl.channel, this@NIOSocketImpl, selector)
+                }
             }
         }
     }
 
     final override fun attachForWriting(channel: ByteChannel): ReaderJob {
         return attachFor("writing", channel, readerJob) {
-            attachForWritingDirectImpl(channel, this.channel, this, selector, socketContext)
+            reader(coroutineDispatcher, parent = socketContext, channel = channel) {
+                attachForWritingDirectImpl(channel, this@NIOSocketImpl.channel, this@NIOSocketImpl, selector)
+            }
         }
     }
 

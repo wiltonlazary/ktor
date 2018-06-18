@@ -2,14 +2,15 @@ package io.ktor.network.sockets
 
 import io.ktor.network.selector.*
 import io.ktor.network.util.*
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.*
 import kotlinx.coroutines.experimental.io.*
 import kotlinx.io.core.*
 import java.net.*
 import java.nio.channels.*
 
-internal class DatagramSocketImpl(override val channel: DatagramChannel, selector: SelectorManager)
-    : BoundDatagramSocket, ConnectedDatagramSocket, NIOSocketImpl<DatagramChannel>(channel, selector, DefaultDatagramByteBufferPool) {
+internal class DatagramSocketImpl(override val channel: DatagramChannel, selector: SelectorManager, coroutineDispatcher: CoroutineDispatcher)
+    : BoundDatagramSocket, ConnectedDatagramSocket, NIOSocketImpl<DatagramChannel>(channel, selector, DefaultDatagramByteBufferPool, coroutineDispatcher) {
 
     override val localAddress: SocketAddress
         get() = channel.localAddress ?: throw IllegalStateException("Channel is not yet bound")
@@ -17,13 +18,13 @@ internal class DatagramSocketImpl(override val channel: DatagramChannel, selecto
     override val remoteAddress: SocketAddress
         get() = channel.remoteAddress ?: throw IllegalStateException("Channel is not yet connected")
 
-    private val sender = actor<Datagram>(ioCoroutineDispatcher) {
+    private val sender = actor<Datagram>(coroutineDispatcher) {
         consumeEach { datagram ->
             sendImpl(datagram)
         }
     }
 
-    private val receiver = produce<Datagram>(ioCoroutineDispatcher) {
+    private val receiver = produce<Datagram>(coroutineDispatcher) {
         while (true) {
             channel.send(receiveImpl())
         }
