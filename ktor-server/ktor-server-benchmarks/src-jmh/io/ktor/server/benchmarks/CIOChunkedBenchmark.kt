@@ -22,7 +22,7 @@ class CIOChunkedBenchmark {
 
         val source = ByteReadChannel(bb)
         val chunked = ByteChannel()
-        launch(coroutineContext) {
+        launch(kotlin.coroutines.experimental.coroutineContext) {
             chunked.discard()
         }
 

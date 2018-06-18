@@ -56,7 +56,7 @@ class ChannelBenchmarks {
 
     @Benchmark
     fun readChannelReads(): Int = runBlocking(Unconfined) {
-        val ch = file.readChannel(coroutineContext = coroutineContext)
+        val ch = file.readChannel(coroutineContext = kotlin.coroutines.experimental.coroutineContext)
         try {
             val baos = ByteArrayOutputStream(maxOf(8192, ch.availableForRead)) // similar to readBytes
             val buffer = ByteArray(8192)
@@ -78,7 +78,7 @@ class ChannelBenchmarks {
     fun readChannelReadsSingleRead(): Int = runBlocking(Unconfined) {
         val fileSize = file.length().toInt()
         val array = ByteArray(fileSize)
-        val ch = file.readChannel(coroutineContext = coroutineContext)
+        val ch = file.readChannel(coroutineContext = kotlin.coroutines.experimental.coroutineContext)
         try {
             ch.readFully(array)
             fileSize
