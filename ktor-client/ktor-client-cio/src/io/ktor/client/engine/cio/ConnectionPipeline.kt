@@ -63,8 +63,11 @@ internal class ConnectionPipeline(
                     val connectionType = ConnectionOptions.parse(response.headers[HttpHeaders.Connection])
                     shouldClose = connectionType == ConnectionOptions.Close
 
+                    val expectEmptyBody = task.request.method == HttpMethod.Head
                     val writerJob = writer(Unconfined, autoFlush = true) {
-                        parseHttpBody(contentLength, transferEncoding, connectionType, inputChannel, channel)
+                        if (!expectEmptyBody) {
+                            parseHttpBody(contentLength, transferEncoding, connectionType, inputChannel, channel)
+                        }
                     }
 
                     task.continuation.resume(

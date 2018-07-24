@@ -122,8 +122,10 @@ internal class Endpoint(
                     input
                 }
                 else -> {
+                    val expectEmptyBody = task.request.method == HttpMethod.Head
                     val httpBodyParser = writer(dispatcher, autoFlush = true) {
-                        parseHttpBody(contentLength, transferEncoding, connectionType, input, channel)
+                        if (!expectEmptyBody)
+                            parseHttpBody(contentLength, transferEncoding, connectionType, input, channel)
                     }
 
                     httpBodyParser.invokeOnCompletion(::closeConnection)
