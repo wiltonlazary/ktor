@@ -215,6 +215,7 @@ abstract class EngineTestSuite<TEngine : ApplicationEngine, TConfiguration : App
 
         withUrl("/") {
             assertEquals(HttpStatusCode.MovedPermanently.value, status.value)
+            discardRemaining()
         }
     }
 
@@ -230,6 +231,7 @@ abstract class EngineTestSuite<TEngine : ApplicationEngine, TConfiguration : App
             assertEquals(HttpStatusCode.MovedPermanently.value, status.value)
 
             assertEquals("/2", headers[HttpHeaders.Location])
+            discardRemaining()
         }
     }
 
@@ -247,6 +249,7 @@ abstract class EngineTestSuite<TEngine : ApplicationEngine, TConfiguration : App
             assertEquals("test-etag", headers[HttpHeaders.ETag])
             assertNull(headers[HttpHeaders.TransferEncoding])
             assertEquals("5", headers[HttpHeaders.ContentLength])
+            discardRemaining()
         }
     }
 
@@ -263,6 +266,7 @@ abstract class EngineTestSuite<TEngine : ApplicationEngine, TConfiguration : App
             assertEquals(200, status.value)
             assertNull(headers[HttpHeaders.TransferEncoding])
             assertEquals("5", headers[HttpHeaders.ContentLength])
+            discardRemaining()
         }
     }
 
@@ -339,9 +343,11 @@ abstract class EngineTestSuite<TEngine : ApplicationEngine, TConfiguration : App
 
         withUrl("/files/${file.toRelativeString(targetClasses).urlPath()}2") {
             assertEquals(404, status.value)
+            discardRemaining()
         }
         withUrl("/wefwefwefw") {
             assertEquals(404, status.value)
+            discardRemaining()
         }
     }
 
@@ -898,6 +904,7 @@ abstract class EngineTestSuite<TEngine : ApplicationEngine, TConfiguration : App
         withUrl("/") {
             assertEquals(HttpStatusCode.Found.value, status.value)
             completed = true
+            discardRemaining()
         }
         assertTrue(completed)
     }
@@ -909,10 +916,12 @@ abstract class EngineTestSuite<TEngine : ApplicationEngine, TConfiguration : App
 
         withUrl("/") {
             assertEquals(HttpStatusCode.NotFound.value, status.value)
+            discardRemaining()
         }
 
         withUrl("/aaaa") {
             assertEquals(HttpStatusCode.NotFound.value, status.value)
+            discardRemaining()
         }
     }
 
@@ -1551,6 +1560,27 @@ abstract class EngineTestSuite<TEngine : ApplicationEngine, TConfiguration : App
             withUrl("/write-less") {
                 call.receive<String>()
             }
+        }
+    }
+
+    @Test
+    open fun testRespondWrite() {
+        createAndStartServer {
+            get("/") {
+                call.respond(object : OutgoingContent.WriteChannelContent() {
+                    override val contentType get() = ContentType.Text.Plain
+                    override suspend fun writeTo(channel: ByteWriteChannel) {
+                        channel.bufferedWriter().use { writer ->
+                            writer.append("test\n")
+                            writer.append("line2")
+                        }
+                    }
+                })
+            }
+        }
+
+        withUrl("/") {
+            assertEquals("test\nline2", call.receive<String>())
         }
     }
 
