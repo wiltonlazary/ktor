@@ -6,9 +6,9 @@ import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
 import io.ktor.network.sockets.ServerSocket
 import io.ktor.network.sockets.Socket
-import io.ktor.network.util.*
 import io.ktor.util.*
 import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.scheduling.*
 import org.slf4j.*
 import java.net.*
 import java.nio.channels.*
@@ -27,8 +27,7 @@ data class HttpServerSettings(
 
 fun httpServer(settings: HttpServerSettings, parentJob: Job? = null, callDispatcher: CoroutineContext? = null, handler: HttpRequestHandler): HttpServer {
     val socket = CompletableDeferred<ServerSocket>()
-    val cpuCount = Runtime.getRuntime().availableProcessors()
-    val dispatcher = IOCoroutineDispatcher((cpuCount * 2 / 3).coerceAtLeast(2))
+    val dispatcher = ExperimentalCoroutineDispatcher()
 
     val serverLatch = CompletableDeferred<Unit>()
     val serverJob = launch(dispatcher + CoroutineName("server-root-${settings.port}") + (parentJob ?: EmptyCoroutineContext)) {

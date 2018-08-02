@@ -8,6 +8,9 @@ import java.util.concurrent.atomic.*
 import kotlin.coroutines.experimental.*
 import kotlin.coroutines.experimental.intrinsics.*
 
+@Deprecated("Use ExperimentalCoroutineDispatcher instead",
+        ReplaceWith("ExperimentalCoroutineDispatcher",
+                imports = ["kotlinx.coroutines.experimental.scheduling.ExperimentalCoroutineDispatcher"]))
 class IOCoroutineDispatcher(private val nThreads: Int) : CoroutineDispatcher(), Closeable {
     private val dispatcherThreadGroup = ThreadGroup(ioThreadGroup, "io-pool-group-sub")
     private val tasks = LockFreeLinkedListHead()
