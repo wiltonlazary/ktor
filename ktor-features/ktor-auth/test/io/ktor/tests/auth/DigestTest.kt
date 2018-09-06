@@ -3,6 +3,7 @@ package io.ktor.tests.auth
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.http.*
+import io.ktor.http.auth.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.testing.*
@@ -17,7 +18,8 @@ class DigestTest {
     fun createExampleChallengeFromRFC() {
         withTestApplication {
             application.intercept(ApplicationCallPipeline.Infrastructure) {
-                call.respond(UnauthorizedResponse(HttpAuthHeader.digestAuthChallenge(
+                call.respond(UnauthorizedResponse(
+                    HttpAuthHeader.digestAuthChallenge(
                         realm = "testrealm@host.com",
                         nonce = "dcd98b7102dd2f0e8b11d0f600bfb0c093",
                         opaque = "5ccc069c403ebaf9f0171e9517f40e41"
