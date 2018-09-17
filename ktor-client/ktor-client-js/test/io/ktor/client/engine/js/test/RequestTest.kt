@@ -10,16 +10,16 @@ import kotlin.test.*
 
 class RequestTest {
 
-//    @Test
-//    fun simpleRequestTest(): Promise<Unit> = async {
-//        val client = HttpClient()
-//
-//        val response: HttpResponse = client.get("https://google.com")
-//
-//        assertTrue(response.status.isSuccess())
-//        val text = response.readText()
-//        println(text)
-//
-//    }.asPromise()
+    @Test
+    fun simpleRequestTest(): Promise<Unit> = async {
+        val client = HttpClient()
+
+        val response: HttpResponse = client.get("https://google.com")
+
+        assertTrue(response.status.isSuccess())
+        val text = response.readText()
+        println(text)
+
+    }.asPromise()
 
 }

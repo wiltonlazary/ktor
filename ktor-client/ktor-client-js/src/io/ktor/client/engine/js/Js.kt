@@ -7,4 +7,5 @@ object Js : HttpClientEngineFactory<HttpClientEngineConfig> {
         JsClientEngine(HttpClientEngineConfig().apply(block))
 }
 
+@JsName("JsClient")
 fun JsClient(): HttpClientEngineFactory<HttpClientEngineConfig> = Js

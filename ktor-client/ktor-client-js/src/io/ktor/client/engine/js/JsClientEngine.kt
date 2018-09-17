@@ -26,7 +26,7 @@ class JsClientEngine(override val config: HttpClientEngineConfig) : HttpClientEn
         val request = DefaultHttpRequest(call, data)
         val rawResponse = fetch(request.url, request.toRaw())
 
-        val stream = rawResponse.body as ReadableStream
+        val stream = rawResponse.body as? ReadableStream ?: error("")
 
         val contentStream = Channel<Uint8Array>(Channel.UNLIMITED)
         stream.getReader().read().then { done: Boolean, chunk: Uint8Array ->

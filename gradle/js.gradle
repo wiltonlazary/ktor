@@ -1,4 +1,3 @@
-
 apply plugin: 'org.jetbrains.kotlin.frontend'
 
 dependencies {
@@ -21,7 +20,13 @@ sourceSets {
 
 compileKotlin2Js {
     kotlinOptions.metaInfo = true
-    kotlinOptions.outputFile = "$project.buildDir.path/js/${project.name}.js"
+    kotlinOptions.sourceMap = true
+    kotlinOptions.moduleKind = 'commonjs'
+    kotlinOptions.main = "noCall"
+}
+
+compileTestKotlin2Js {
+    kotlinOptions.metaInfo = true
     kotlinOptions.sourceMap = true
     kotlinOptions.moduleKind = 'commonjs'
     kotlinOptions.main = "call"
@@ -31,5 +36,14 @@ kotlinFrontend {
     downloadNodeJsVersion = "10.8.0"
     webpackBundle {
         bundleName = "main"
+    }
+
+    npm {
+        devDependency "karma-qunit", "1.2.1"
+        devDependency "karma", "2.0.5"
+    }
+
+    karma {
+        enableWebPack true
     }
 }
